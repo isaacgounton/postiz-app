@@ -1,0 +1,75 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - FRONTEND_URL=${FRONTEND_URL}
+      - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL}
+      - BACKEND_INTERNAL_URL=${BACKEND_INTERNAL_URL}
+      - CLOUDFLARE_ACCOUNT_ID=${CLOUDFLARE_ACCOUNT_ID}
+      - CLOUDFLARE_ACCESS_KEY=${CLOUDFLARE_ACCESS_KEY}
+      - CLOUDFLARE_SECRET_ACCESS_KEY=${CLOUDFLARE_SECRET_ACCESS_KEY}
+      - CLOUDFLARE_BUCKETNAME=${CLOUDFLARE_BUCKETNAME}
+      - CLOUDFLARE_BUCKET_URL=${CLOUDFLARE_BUCKET_URL}
+      - CLOUDFLARE_REGION=${CLOUDFLARE_REGION}
+      - STORAGE_PROVIDER=${STORAGE_PROVIDER:-local}
+      - UPLOAD_DIRECTORY=${UPLOAD_DIRECTORY:-/uploads}
+      - NEXT_PUBLIC_UPLOAD_STATIC_DIRECTORY=${NEXT_PUBLIC_UPLOAD_STATIC_DIRECTORY:-/uploads}
+      - IS_GENERAL=true
+      - NODE_ENV=production
+    volumes:
+      - uploads:/uploads
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "5000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-postiz}
+      - POSTGRES_USER=${POSTGRES_USER:-postiz}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postiz}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  postgres_data:
+  redis_data:
+  uploads:
+
+networks:
+  default:
+    name: postiz-network
