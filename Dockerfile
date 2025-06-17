@@ -17,6 +17,12 @@ COPY apps/workers/package.json ./apps/workers/
 COPY apps/cron/package.json ./apps/cron/
 COPY libraries/*/package.json ./libraries/*/
 
+# Copy build.plugins.js which is needed during postinstall
+COPY build.plugins.js ./
+
+# Copy the libraries structure needed for the plugin build script
+COPY libraries/ ./libraries/
+
 # Install dependencies - regenerate lockfile to match current config
 RUN pnpm install --no-frozen-lockfile
 
