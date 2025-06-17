@@ -17,8 +17,8 @@ COPY apps/workers/package.json ./apps/workers/
 COPY apps/cron/package.json ./apps/cron/
 COPY libraries/*/package.json ./libraries/*/
 
-# Install dependencies
-RUN pnpm install --frozen-lockfile
+# Install dependencies - regenerate lockfile to match current config
+RUN pnpm install --no-frozen-lockfile
 
 # Copy source code
 COPY . .
